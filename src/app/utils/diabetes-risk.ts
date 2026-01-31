@@ -251,3 +251,61 @@ export function calculateAUC(rocData: any[]) {
   }
   return auc;
 }
+
+// Call Flask backend SVM model for real prediction
+export async function fetchBackendRisk(data: PatientData): Promise<RiskResult> {
+  const response = await fetch("http://127.0.0.1:5000/predict", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      gender: data.gender,
+      pregnancies: data.gender === 'female' ? data.pregnancies : 0,
+      glucose: data.glucose,
+      bloodPressure: data.bloodPressure,
+      skinThickness: data.skinThickness,
+      insulin: data.insulin,
+      bmi: data.bmi,
+      dpf: data.diabetesPedigreeFunction,
+      age: data.age,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Backend prediction failed");
+  }
+
+  const result = await response.json();
+
+  const score: number = result.risk_score; // 0–100 from backend
+
+  // Map backend score to UI levels/colors/recommendations
+  let level: 'low' | 'medium' | 'high';
+  let color: string;
+  let recommendation: string;
+
+  if (score < 35) {
+    level = 'low';
+    color = '#10b981'; // green
+    recommendation =
+      'Your diabetes risk is low. Continue maintaining a healthy lifestyle with regular exercise and balanced nutrition. Regular screening is recommended.';
+  } else if (score < 65) {
+    level = 'medium';
+    color = '#1E88E5'; // blue
+    recommendation =
+      'Your diabetes risk is moderate. Consider lifestyle modifications including weight management, dietary improvements, and regular physical activity. Consult with your healthcare provider for personalized guidance.';
+  } else {
+    level = 'high';
+    color = '#ef4444'; // red
+    recommendation =
+      'Your diabetes risk is elevated. We strongly recommend scheduling a consultation with your healthcare provider for comprehensive evaluation, possible glucose tolerance testing, and a personalized intervention plan.';
+  }
+
+  return {
+    score,
+    level,
+    color,
+    recommendation,
+  };
+}
