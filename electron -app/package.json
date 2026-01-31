@@ -1,14 +1,16 @@
 {
   "name": "my-electron-app",
   "version": "1.0.0",
+  "description": "Electron wrapper for Vite build",
+  "author": "Vamsi",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "build": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^latest",
-    "electron-builder": "^latest"
+    "electron": "^40.1.0",
+    "electron-builder": "^26.6.0"
   },
   "build": {
     "appId": "com.example.myapp",

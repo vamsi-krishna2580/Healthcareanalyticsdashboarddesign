@@ -1,2 +1,6 @@
 node_modules/
 elctron -app/node_modules
+electron -app/dist/win-unpacked
+electron -app/dist/builder-debug.yml
+electron -app/dist/builder-effective-config.yaml
+electron -app/dist/MyApp 1.0.0.exe
