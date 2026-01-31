@@ -1,0 +1,104 @@
+/* Healthcare Analytics Dashboard Custom Styles */
+
+/* Medical color variables */
+:root {
+  --medical-blue: #1E88E5;
+  --medical-blue-light: #42A5F5;
+  --medical-blue-dark: #1565C0;
+  --risk-low: #10b981;
+  --risk-medium: #1E88E5;
+  --risk-high: #ef4444;
+  --clinical-gray: #f8fafc;
+}
+
+/* Smooth transitions for interactive elements */
+.recharts-surface {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Enhanced card shadows for depth */
+.shadow-md {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: box-shadow 0.3s ease-in-out;
+}
+
+.shadow-md:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* Slider styling for medical aesthetic */
+[role="slider"] {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Custom scrollbar for cleaner look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Tooltip enhancements */
+.recharts-tooltip-wrapper {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* Smooth gauge animation */
+@keyframes gaugeRotate {
+  from {
+    stroke-dashoffset: 628;
+  }
+}
+
+/* Gender toggle button enhancements */
+button[class*="rounded-md"] {
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* Smooth field transitions */
+.space-y-6 > * {
+  transition: margin 0.3s ease-in-out;
+}
+
+/* Grid layout for responsive charts */
+@media (max-width: 1024px) {
+  .grid-cols-12 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+  
+  .col-span-4,
+  .col-span-8 {
+    grid-column: span 1 / span 1;
+  }
+}
+
+/* Accessible focus states */
+button:focus-visible,
+[role="slider"]:focus-visible {
+  outline: 2px solid var(--medical-blue);
+  outline-offset: 2px;
+}
+
+/* Card header gradient consistency */
+.bg-gradient-to-r {
+  background-image: linear-gradient(to right, #f0f7ff, #ffffff);
+}
+
+/* Conditional field animations */
+[class*="overflow-hidden"] {
+  will-change: height, opacity;
+}
