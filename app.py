@@ -6,6 +6,7 @@ import warnings
 import os
 import sys
 import math
+import json
 
 warnings.filterwarnings("ignore")
 
@@ -18,14 +19,13 @@ def resource_path(relative_path):
 
 app = Flask(__name__)
 
-# allow frontend dev server (vite) to access backend
+# allow all origins for development (frontend on localhost can call backend)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# load model and scaler
+# load trained model and scaler
 model = joblib.load(resource_path("model/svm_diabetes_model.pkl"))
 scaler = joblib.load(resource_path("model/scaler.pkl"))
 
-# exact Pima feature order used during training
 FEATURE_NAMES = [
     "Pregnancies",
     "Glucose",
@@ -44,16 +44,19 @@ def predict():
         if not data:
             return jsonify({"error": "No input data"}), 400
 
-        # -------- Gender handling ----------
+        # 🔹 Print raw input from frontend
+        print("\n=== Incoming request from frontend ===")
+        print(json.dumps(data, indent=2))
+
+        # -------- Gender handling --------
         gender = str(data.get("gender", "male")).lower()
 
         if gender == "female":
             pregnancies = float(data.get("pregnancies", 0))
         else:
-            # males or unspecified -> pregnancies not applicable
             pregnancies = 0.0
 
-        # -------- Read and clamp inputs to UI slider ranges ----------
+        # -------- Clamp inputs to UI ranges --------
         glucose = max(0, min(200, float(data.get("glucose", 0))))
         blood_pressure = max(0, min(180, float(data.get("bloodPressure", 0))))
         skin_thickness = max(0, min(100, float(data.get("skinThickness", 0))))
@@ -62,8 +65,8 @@ def predict():
         dpf = max(0.0, min(3.0, float(data.get("dpf", 0))))
         age = max(18, min(90, float(data.get("age", 18))))
 
-        # -------- Build feature dataframe in exact training order ----------
-        features = pd.DataFrame([[
+        # feature vector in correct order
+        feature_values = [
             pregnancies,
             glucose,
             blood_pressure,
@@ -72,34 +75,44 @@ def predict():
             bmi,
             dpf,
             age
-        ]], columns=FEATURE_NAMES)
+        ]
 
-        # -------- Scale features ----------
+        # 🔹 Print processed feature vector
+        print("Processed feature vector used for model:")
+        for name, value in zip(FEATURE_NAMES, feature_values):
+            print(f"  {name}: {value}")
+
+        features = pd.DataFrame([feature_values], columns=FEATURE_NAMES)
+
+        # scale features
         features_scaled = scaler.transform(features)
 
-        # -------- Prediction ----------
+        # prediction
         prediction_class = model.predict(features_scaled)[0]
 
-        # probability for positive class (diabetes = 1)
+        # probability of diabetes (class 1)
         if hasattr(model, "predict_proba"):
             prob = model.predict_proba(features_scaled)[0][1]
         else:
-            # fallback if SVM trained without probability=True
             decision = model.decision_function(features_scaled)[0]
-            prob = 1 / (1 + math.exp(-decision))  # sigmoid approx
+            prob = 1 / (1 + math.exp(-decision))
 
         risk_score = round(prob * 100, 2)
-
         result_label = "High Risk" if prediction_class == 1 else "Low Risk"
+
+        # 🔹 Print prediction output
+        print(f"Prediction: {result_label}")
+        print(f"Risk score: {risk_score}%")
+        print("======================================\n")
 
         return jsonify({
             "prediction": result_label,
-            "risk_score": risk_score,   # 0–100 for gauge
-            "probability": round(prob, 4)  # optional raw probability 0–1
+            "risk_score": risk_score,
+            "probability": round(prob, 4)
         })
 
     except Exception as e:
-        print("Error:", str(e))
+        print("Error during prediction:", str(e))
         return jsonify({"error": "Prediction failed"}), 500
 
 
