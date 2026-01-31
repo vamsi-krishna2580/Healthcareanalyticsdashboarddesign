@@ -7,6 +7,7 @@ import os
 import sys
 import math
 import json
+import random
 
 warnings.filterwarnings("ignore")
 
@@ -19,7 +20,7 @@ def resource_path(relative_path):
 
 app = Flask(__name__)
 
-# allow all origins for development (frontend on localhost can call backend)
+# allow all origins for development
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 # load trained model and scaler
@@ -44,19 +45,14 @@ def predict():
         if not data:
             return jsonify({"error": "No input data"}), 400
 
-        # 🔹 Print raw input from frontend
         print("\n=== Incoming request from frontend ===")
         print(json.dumps(data, indent=2))
 
-        # -------- Gender handling --------
+        # gender logic
         gender = str(data.get("gender", "male")).lower()
+        pregnancies = float(data.get("pregnancies", 0)) if gender == "female" else 0.0
 
-        if gender == "female":
-            pregnancies = float(data.get("pregnancies", 0))
-        else:
-            pregnancies = 0.0
-
-        # -------- Clamp inputs to UI ranges --------
+        # clamp inputs to UI slider ranges
         glucose = max(0, min(200, float(data.get("glucose", 0))))
         blood_pressure = max(0, min(180, float(data.get("bloodPressure", 0))))
         skin_thickness = max(0, min(100, float(data.get("skinThickness", 0))))
@@ -65,7 +61,6 @@ def predict():
         dpf = max(0.0, min(3.0, float(data.get("dpf", 0))))
         age = max(18, min(90, float(data.get("age", 18))))
 
-        # feature vector in correct order
         feature_values = [
             pregnancies,
             glucose,
@@ -77,20 +72,15 @@ def predict():
             age
         ]
 
-        # 🔹 Print processed feature vector
         print("Processed feature vector used for model:")
         for name, value in zip(FEATURE_NAMES, feature_values):
             print(f"  {name}: {value}")
 
         features = pd.DataFrame([feature_values], columns=FEATURE_NAMES)
-
-        # scale features
         features_scaled = scaler.transform(features)
 
-        # prediction
         prediction_class = model.predict(features_scaled)[0]
 
-        # probability of diabetes (class 1)
         if hasattr(model, "predict_proba"):
             prob = model.predict_proba(features_scaled)[0][1]
         else:
@@ -100,7 +90,6 @@ def predict():
         risk_score = round(prob * 100, 2)
         result_label = "High Risk" if prediction_class == 1 else "Low Risk"
 
-        # 🔹 Print prediction output
         print(f"Prediction: {result_label}")
         print(f"Risk score: {risk_score}%")
         print("======================================\n")
@@ -114,6 +103,36 @@ def predict():
     except Exception as e:
         print("Error during prediction:", str(e))
         return jsonify({"error": "Prediction failed"}), 500
+
+
+# 🔹 simple population stats endpoint (mock but backend-driven)
+@app.route("/population-stats", methods=["GET"])
+def population_stats():
+    data = []
+
+    # generate synthetic population consistent with Pima-style features
+    for _ in range(500):
+        age = random.randint(20, 80)
+        bmi = round(random.uniform(18, 45), 1)
+        glucose = random.randint(70, 200)
+        bp = random.randint(60, 160)
+
+        # simple heuristic for diabetes flag
+        has_diabetes = (
+            glucose > 140 or
+            bmi > 32 or
+            (age > 55 and glucose > 120)
+        )
+
+        data.append({
+            "age": age,
+            "bmi": bmi,
+            "glucose": glucose,
+            "bloodPressure": bp,
+            "hasDiabetes": bool(has_diabetes)
+        })
+
+    return jsonify(data)
 
 
 @app.route("/health", methods=["GET"])
