@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
+import numpy as np
 from flask_cors import CORS
 import warnings
 import os
@@ -8,6 +9,9 @@ import sys
 import math
 import json
 import random
+
+from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score
+
 
 warnings.filterwarnings("ignore")
 
@@ -114,7 +118,12 @@ def model_metrics():
         X_test_scaled = scaler.transform(X_test)
 
         # Get probabilities
-        y_prob = model.predict_proba(X_test_scaled)[:,1]
+        if hasattr(model, "predict_proba"):
+            y_prob = model.predict_proba(X_test_scaled)[:,1]
+        else:
+            decision = model.decision_function(X_test_scaled)
+            y_prob = 1/(1+np.exp(-decision))
+
 
         # Apply threshold manually
         y_pred = (y_prob >= threshold).astype(int)
