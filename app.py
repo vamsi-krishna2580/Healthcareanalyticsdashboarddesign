@@ -23,6 +23,8 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 model = joblib.load(resource_path("model/svm_diabetes_model.pkl"))
 scaler = joblib.load(resource_path("model/scaler.pkl"))
+X_test = joblib.load(resource_path("model/X_test.pkl"))
+y_test = joblib.load(resource_path("model/y_test.pkl"))
 
 FEATURE_NAMES = [
     "Pregnancies","Glucose","BloodPressure","SkinThickness",
