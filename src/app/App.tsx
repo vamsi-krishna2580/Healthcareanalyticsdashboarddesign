@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { IndividualPrediction } from '@/app/components/IndividualPrediction';
-import { PopulationInsights } from '@/app/components/PopulationInsights';
+// import { PopulationInsights } from '@/app/components/PopulationInsights';
 import { ModelPerformance } from '@/app/components/ModelPerformance';
 import { Activity, Users, BarChart3 } from 'lucide-react';
 
@@ -52,8 +52,8 @@ export default function App() {
               value="population"
               className="flex items-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
             >
-              <Users className="w-4 h-4" />
-              <span>Population Insights</span>
+              {/* <Users className="w-4 h-4" /> */}
+              {/* <span>Population Insights</span> */}
             </TabsTrigger>
             <TabsTrigger 
               value="performance"
@@ -69,9 +69,9 @@ export default function App() {
             <IndividualPrediction />
           </TabsContent>
           
-          <TabsContent value="population" className="mt-6">
+          {/* <TabsContent value="population" className="mt-6">
             <PopulationInsights />
-          </TabsContent>
+          </TabsContent> */}
           
           <TabsContent value="performance" className="mt-6">
             <ModelPerformance />
