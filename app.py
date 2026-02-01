@@ -110,60 +110,52 @@ def model_metrics():
     try:
         threshold = float(request.args.get("threshold", 0.5))
 
-        total = 1000
-        actual_pos = 300
-        actual_neg = 700
+        # Scale test data
+        X_test_scaled = scaler.transform(X_test)
 
-        # sensitivity decreases as threshold increases
-        sensitivity = 0.9 - threshold*0.5   # TPR
-        specificity = 0.6 + threshold*0.35  # TNR
+        # Get probabilities
+        y_prob = model.predict_proba(X_test_scaled)[:,1]
 
-        tp = int(actual_pos * sensitivity)
-        fn = actual_pos - tp
-        tn = int(actual_neg * specificity)
-        fp = actual_neg - tn
+        # Apply threshold manually
+        y_pred = (y_prob >= threshold).astype(int)
 
-        accuracy = (tp+tn)/total
+        # Confusion Matrix
+        cm = confusion_matrix(y_test, y_pred)
+        tn, fp, fn, tp = cm.ravel()
+
+        # Metrics
+        accuracy = (tp+tn)/(tp+tn+fp+fn)
         precision = tp/(tp+fp) if (tp+fp)>0 else 0
         recall = tp/(tp+fn) if (tp+fn)>0 else 0
         f1 = (2*precision*recall)/(precision+recall) if (precision+recall)>0 else 0
 
-        # ROC curve points
-        roc=[]
-        for i in range(0,101,5):
-            t=i/100
-            tpr = max(0,min(1, 0.95 - t*0.8 + random.uniform(-0.02,0.02)))
-            fpr = max(0,min(1, t*0.9 + random.uniform(-0.02,0.02)))
-            roc.append({"fpr":round(fpr,3),"tpr":round(tpr,3)})
+        # ROC Curve
+        fpr, tpr, _ = roc_curve(y_test, y_prob)
+        auc = roc_auc_score(y_test, y_prob)
 
-        roc = sorted(roc, key=lambda x: x["fpr"])
-
-        # trapezoidal AUC
-        auc=0
-        for i in range(1,len(roc)):
-            w = roc[i]["fpr"]-roc[i-1]["fpr"]
-            h = (roc[i]["tpr"]+roc[i-1]["tpr"])/2
-            auc += w*h
+        roc_points = [
+            {"fpr": float(f), "tpr": float(t)}
+            for f, t in zip(fpr, tpr)
+        ]
 
         return jsonify({
             "confusion":{
-                "truePositive":tp,
-                "falsePositive":fp,
-                "trueNegative":tn,
-                "falseNegative":fn,
-                "accuracy":round(accuracy,4),
-                "precision":round(precision,4),
-                "recall":round(recall,4),
-                "f1Score":round(f1,4)
+                "truePositive": int(tp),
+                "falsePositive": int(fp),
+                "trueNegative": int(tn),
+                "falseNegative": int(fn),
+                "accuracy": round(accuracy,4),
+                "precision": round(precision,4),
+                "recall": round(recall,4),
+                "f1Score": round(f1,4)
             },
-            "roc":roc,
-            "auc":round(auc,4)
+            "roc": roc_points,
+            "auc": round(float(auc),4)
         })
 
     except Exception as e:
-        print("Metrics error:",e)
+        print("Metrics error:", e)
         return jsonify({"error":"Metrics failed"}),500
-
 
 @app.route("/health", methods=["GET"])
 def health():
