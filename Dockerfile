@@ -8,7 +8,7 @@ COPY requirements.txt .
 COPY model ./model
 
 # Copy frontend dist
-COPY "electron -app/dist" ./dist
+COPY "electron-app/dist" ./dist
 
 # Copy start script
 COPY start.sh .
